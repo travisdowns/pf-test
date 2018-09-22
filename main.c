@@ -16,6 +16,30 @@
 // My code does not support other page sizes. Although it'd be interesting to experiment with different sizes.
 #define PAGE_SIZE 4096
 
+// Exactly one of these must be defined.
+//#define ALL_HIT_TLB
+#ifdef ALL_HIT_TLB
+#define TEST_CASE 0
+#elif defined(ALL_MISS_TLB)
+#define TEST_CASE 1
+#elif defined(FAULT_DIFFERENT_PAGE)
+#define TEST_CASE 2
+#elif defined(FAULT_SAME_PAGE)
+#define TEST_CASE 3
+#endif
+
+// In addition, you can define zero or one of these two:
+//#define LOAD_LFENCE
+//#define PREFETCH_LFENCE
+
+// Exactly one of these must be defined.
+#define PREFETCHh
+//#define PREFETCW
+
+// Prefetch hint for the PREFETCHh case.
+// Ignored for the PREFETCW case.
+#define PREFETCH_HINT _MM_HINT_T0
+
 int main()
 {
     
@@ -36,30 +60,42 @@ int main()
     
         struct rusage usage1, usage2;
         getrusage(RUSAGE_SELF, &usage1);
-    
-        // Test the case for page fault by making the removing the mapping between virtual and physical pages.
-        //munmap(base, PAGE_SIZE*NUM_OF_PAGES);
+
+        #if TEST_CASE == 2 || TEST_CASE == 3
+            munmap(base, PAGE_SIZE*NUM_OF_PAGES);
+        #endif
     
         struct timespec start, end;
         clock_gettime(CLOCK_MONOTONIC, &start);
     
         for(char *i = base; i < limit; i=i+PAGE_SIZE)
         {
-    
-            /*
-    
-            For testing the prefetch0 latency, include only _mm_prefetch. Pass either i or base to test "all miss TLB" and "all hit TLB" cases.
-            For testing the prefetchw latency, include only _m_prefetchw. Pass either i or base to test "all miss TLB" and "all hit TLB" cases.
-            For comparing between prefetch0 and load, use _mm_lfence.
-    
-            */
-    
-            //*((volatile char *)i);
-            _mm_prefetch(i,_MM_HINT_T0);
-            //_mm_lfence();
 
-            // Supported on Broadwell and Silvermont and later.
-            //_m_prefetchw(i);.
+            #ifdef LOAD_LFENCE
+                *((volatile char *)i);
+                _mm_lfence();
+            #elif defined(PREFETCH_LFENCE)
+                #define FENCE _mm_lfence();
+            #else
+                #define FENCE
+            #endif
+
+            #if !defined(LOAD_LFENCE)
+                #if TEST_CASE == 0 || TEST_CASE == 3
+                    #ifdef PREFETCHh
+                        _mm_prefetch(base, PREFETCH_HINT);
+                    #elif defined(PREFETCW)
+                        _m_prefetchw(base);
+                    #endif
+                #elif TEST_CASE == 1 || TEST_CASE == 2
+                    #ifdef PREFETCHh
+                        _mm_prefetch(i, PREFETCH_HINT);
+                    #elif defined(PREFETCW)
+                        _m_prefetchw(i);
+                    #endif
+                #endif
+                FENCE
+            #endif
         }
     
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -70,8 +106,9 @@ int main()
         minorFaults += usage2.ru_minflt - usage1.ru_minflt;
         majorFaults += usage2.ru_majflt - usage1.ru_majflt;
     
-        // Comment this line for the case of page fault.
-        munmap(base, PAGE_SIZE*NUM_OF_PAGES);
+        #if TEST_CASE != 2 && TEST_CASE != 3
+            munmap(base, PAGE_SIZE*NUM_OF_PAGES);
+        #endif
     
     }
     
