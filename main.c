@@ -26,6 +26,8 @@
 #define TEST_CASE 2
 #elif defined(FAULT_SAME_PAGE)
 #define TEST_CASE 3
+#else
+#error "No test case defined"
 #endif
 
 // In addition, you can define zero or one of these two:
