@@ -18,4 +18,5 @@ env:
   -TRY=5
 
 script:
-- make run
+  - lscpu 
+  - make run
