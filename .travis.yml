@@ -1,0 +1,21 @@
+language: cpp
+sudo: false
+branches:
+  except:
+    - /^(wip\/)?(appveyor|msvc|mingw|windows)(\-.+)?$/
+
+#addons:
+#  apt:
+#    sources: &default_sources
+#      - ubuntu-toolchain-r-test
+#    packages: &default_pacakges
+      
+env:
+  -TRY=1
+  -TRY=2
+  -TRY=3
+  -TRY=4
+  -TRY=5
+
+script:
+- make run
