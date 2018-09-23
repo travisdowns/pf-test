@@ -1,5 +1,5 @@
 
-ALL=test-allhit test-allmiss test-faultsame test-faultdiff
+ALL=test-allmiss test-allhit test-faultdiff test-faultsame
 all: $(ALL)
 
 test-allhit:    TEST=ALL_HIT_TLB
@@ -11,10 +11,7 @@ test-%: main.c
 	gcc -O3 -g -D$(TEST) $^ -o $@
 
 run: all
-	./test-allhit
-	./test-allmiss
-	./test-faultsame
-	./test-faultdiff
+	@for x in $(ALL); do echo "Running $$x"; ./$$x; done
 
 clean:
 	rm -f $(ALL)

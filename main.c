@@ -114,7 +114,8 @@ int main()
     
     }
     
-    printf("Time = %f nanoseconds\n", diff/REPEAT);
+    printf("Time        = %5.0f ns\n", diff/REPEAT);
+    printf("Time/access = %5.2f ns\n", diff/REPEAT/NUM_OF_PAGES);
     printf("minorFaults = %f\n", minorFaults/REPEAT); // Must be very small.
     printf("majorFaults = %f\n", majorFaults/REPEAT); // Must be very small.
  
