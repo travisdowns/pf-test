@@ -8,7 +8,7 @@ test-faultsame: TEST=FAULT_SAME_PAGE
 test-faultdiff: TEST=FAULT_DIFFERENT_PAGE
 
 test-%: main.c
-	gcc -O3 -g -D$(TEST) $^ -o $@
+	gcc -std=c99 -O3 -g -D$(TEST) $^ -o $@
 
 run: all
 	@for x in $(ALL); do echo "Running $$x"; ./$$x; done
